@@ -1,9 +1,10 @@
 import puppeteer from 'puppeteer';
+import moment from 'moment';
 import * as fs from 'fs';
 
 // list of all products' product code
 const products = [
-    { code: 'animal-health-200-ml-p-317233333'},
+    // { code: 'animal-health-200-ml-p-317233333'},
     { code: '200-ml-antiseptik-dezenfektan-sprey-p-22714059' },
 ];
 
@@ -22,16 +23,19 @@ const Scrape = async (code) => {
         let productName = document.querySelector('[class=product-name]').textContent;
         return {productName, commentCount};
     });
+
+    moment.locale();
+    let scrapeDate = moment().format('L');
     // console.log(commentCount);
     await page.waitForSelector('[class=pr-rnr-com]', {visible: true});
-    const comments = await page.evaluate(async (commentCount) => {
+    const comments = await page.evaluate(async (commentCount, scrapeDate) => {
         let reviews = document.querySelectorAll('[class=rnr-com-w]');
         let scrollAmount = 1000;
         while(reviews.length < commentCount){
             console.log('Scrolled', scrollAmount);
             window.scrollBy(0, scrollAmount);
             await new Promise(resolve => {
-                setTimeout(resolve, 100);
+                setTimeout(resolve, 500);
             });
             if(reviews.length !== document.querySelectorAll('[class=rnr-com-w]').length){
                 scrollAmount += 100;
@@ -47,10 +51,10 @@ const Scrape = async (code) => {
             let authorName = details[0];
             let date = details[1];
             let vendorName = details[2].split(' ').slice(0, -2).join(' ');
-            comments.push({authorName, date, content, rate, vendorName});
+            comments.push({authorName, date, content, rate, vendorName, scrapeDate});
         })
         return comments;
-    }, commentCount);
+    }, commentCount, scrapeDate);
 
     await browser.close();
     return {productName, comments};
@@ -60,7 +64,6 @@ products.forEach(product => {
     let {code} = product;
     Scrape(code).then(({productName, comments}) => {
         const jsonContent = JSON.stringify(comments, null, '\t');
-
         fs.writeFile(`./${productName}.json`, jsonContent, 'utf8', function (err) {
             if (err) {
                 return console.log(err);
