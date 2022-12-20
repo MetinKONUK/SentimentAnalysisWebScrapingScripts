@@ -6,7 +6,6 @@ const products = [
     {code: 'crystalin-kedi-kopek-icin-deri-ve-meme-bakim-solusyonu-200-ml-p-HBV00000CF6KA'},
 ];
 
-
 // scraper function
 const Scrape = async (code) => {
     const browser = await puppeteer.launch({headless: true});
@@ -26,10 +25,13 @@ const Scrape = async (code) => {
     const productName = await page.evaluate(() => {
         return document.querySelector('.hermes-ProductRate-module-cHmp3strss2sSkhaeXS3 > span').textContent.trim();
     });
+
     let comments = [];
-    for(let i = 1; i < pageCount; ++i){
-        console.log('Scraping page: ', i);
-        await page.waitForSelector('[itemprop=review]', {visible: true});
+    let i = 1;
+    try {
+        for(i; i < pageCount; ++i){
+            console.log('Scraping page: ', i);
+            await page.waitForSelector('[itemprop=review]', {visible: true});
             const partialComments = await page.evaluate(() => {
                 let comments = [];
                 const reviews = document.querySelectorAll('[itemprop=review]');
@@ -45,10 +47,12 @@ const Scrape = async (code) => {
                 });
                 return comments;
             });
-        comments = comments.concat(partialComments);
-        await page.goto(`https://hepsiburada.com/${code}-yorumlari?sayfa=${i+1}`);
+            comments = comments.concat(partialComments);
+            await page.goto(`https://hepsiburada.com/${code}-yorumlari?sayfa=${i+1}`);
+        }
+    } catch (e){
+        console.log('Terminated at page: ', i);
     }
-
     await browser.close();
     return {productName, comments};
 }

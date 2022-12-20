@@ -4,7 +4,7 @@ import * as fs from 'fs';
 
 // list of all products' product code
 const products = [
-    // { code: 'animal-health-200-ml-p-317233333'},
+    { code: 'animal-health-200-ml-p-317233333'},
     { code: '200-ml-antiseptik-dezenfektan-sprey-p-22714059' },
 ];
 
@@ -26,7 +26,7 @@ const Scrape = async (code) => {
 
     moment.locale();
     let scrapeDate = moment().format('L');
-    // console.log(commentCount);
+
     await page.waitForSelector('[class=pr-rnr-com]', {visible: true});
     const comments = await page.evaluate(async (commentCount, scrapeDate) => {
         let reviews = document.querySelectorAll('[class=rnr-com-w]');
