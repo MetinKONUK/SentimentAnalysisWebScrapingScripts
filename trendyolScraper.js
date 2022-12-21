@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 
 const Scrape = async (code) => {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox']
     });
     const page = (await browser.pages())[0];

@@ -11,11 +11,11 @@ import { products as hepsiburadaProductsList } from "./hepsiburadaProductsList.j
 import { Scrape as amazonScraper } from './amazonScraper.js';
 import { products as amazonProductsList } from "./amazonProductsList.js";
 
+// LIST OF ALL PRODUCT CATEGORIES
+import {categories} from "./productCategories.js";
+
 // CONFIGURE MOMENT TO CALCULATE DATE BASED ON LOCAL TIME
 moment.locale();
-
-// LIST OF ALL PRODUCT CATEGORIES
-let categories = ['animal-health-200-ml', 'animal-health-50-ml', 'antiseptic-sanitizer-100-ml', 'animal-health-1000-ml']
 
 // CREDENTIALS
 const USERNAME = 'crystalin';
@@ -86,9 +86,13 @@ const run = async () => {
     }
 }
 
-// RUN PROGRAMME EVERY MIDNIGHT
-schedule.scheduleJob('10 * * * *', () => {
-    run().then(() => {
-        console.log('Scraping Done!')
-    });
+run().then(() => {
+    console.log('Scraping Done!')
 });
+
+// RUN PROGRAMME EVERY MIDNIGHT
+// schedule.scheduleJob('10 * * * *', () => {
+//     run().then(() => {
+//         console.log('Scraping Done!')
+//     });
+// });
