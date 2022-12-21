@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 import moment from 'moment';
-import * as schedule from 'node-schedule';
+import { uuid } from 'uuidv4';
 
 import { Scrape as trendyolScraper } from './trendyolScraper.js';
 import { products as trendyolProductsList } from "./trendyolProductsList.js";
@@ -42,14 +42,17 @@ const run = async () => {
             }
 
             if( await collection.findOne({productName:category, 'comments.scrapeDate':date}) === null){
-                    await collection.updateOne({productName:category}, {$push: {comments: {isAnalyzed: false, scrapeDate: date, trendyol: [], hepsiburada: [], amazon: []}}});
+                await collection.updateOne({productName:category}, {$push: {comments: {isAnalyzed: false, scrapeDate: date, trendyol: [], hepsiburada: [], amazon: []}}});
             }
         }
         // SCRAPE AMAZON COMMENTS & SAVE TO THE DATABASE
         for(const {asin, category} of amazonProductsList) {
             await amazonScraper(asin)
-                .then(({productName, comments}) => {
-                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
+                .then(async ({productName, comments}) => {
+                    for await (let comment of comments){
+                        comment.id = uuid();
+                    }
+                    await collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
                     console.log('amazon updated');
                 })
                 .catch((err) => {
@@ -57,10 +60,13 @@ const run = async () => {
                 });
         }
         // SCRAPE TRENDYOL COMMENTS & SAVE TO THE DATABASE
-        for(const {code, category} of trendyolProductsList) {
+        for (const {code, category} of trendyolProductsList) {
             await trendyolScraper(code)
-                .then(({productName, comments}) => {
-                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.trendyol': {$each: comments}}});
+                .then(async ({productName, comments}) => {
+                    for await (let comment of comments){
+                        comment.id = uuid();
+                    }
+                    await collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.trendyol': {$each: comments}}});
                     console.log('trendyol updated');
                 })
                 .catch((err) => {
@@ -71,8 +77,11 @@ const run = async () => {
         // SCRAPE HEPSIBURADA COMMENTS & SAVE TO THE DATABASE
         for(const {code, category} of hepsiburadaProductsList){
             await hepsiburadaScraper(code)
-                .then(({productName, comments}) => {
-                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.hepsiburada': {$each: comments}}});
+                .then(async ({productName, comments}) => {
+                    for await (let comment of comments){
+                        comment.id = uuid();
+                    }
+                    await collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.hepsiburada': {$each: comments}}});
                     console.log('hepsiburada updated');
                 })
                 .catch((err) => {
