@@ -87,7 +87,7 @@ const run = async () => {
 }
 
 // RUN PROGRAMME EVERY MIDNIGHT
-schedule.scheduleJob('55 * * * *', () => {
+schedule.scheduleJob('10 * * * *', () => {
     run().then(() => {
         console.log('Scraping Done!')
     });
