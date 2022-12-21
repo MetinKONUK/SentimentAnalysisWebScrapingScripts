@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb';
 import moment from 'moment';
-import * as fs from 'fs';
+import * as schedule from 'node-schedule';
 
 import { Scrape as trendyolScraper } from './trendyolScraper.js';
 import { products as trendyolProductsList } from "./trendyolProductsList.js";
@@ -22,9 +22,9 @@ const USERNAME = 'crystalin';
 const PASSWORD = 'crystalin';
 // CONNECTION URI
 const URI = `mongodb+srv://${USERNAME}:${PASSWORD}@crystalin.w93y0ww.mongodb.net/?retryWrites=true&w=majority`;
-
 // CREATE A NEW MongoClient
 const client = new MongoClient(URI);
+
 const run = async () => {
     try
     {
@@ -45,7 +45,18 @@ const run = async () => {
                     await collection.updateOne({productName:category}, {$push: {comments: {isAnalyzed: false, scrapeDate: date, trendyol: [], hepsiburada: [], amazon: []}}});
             }
         }
-        // SCRAPE TRENDYOL COMMENTS
+        // SCRAPE AMAZON COMMENTS & SAVE TO THE DATABASE
+        for(const {asin, category} of amazonProductsList) {
+            await amazonScraper(asin)
+                .then(({productName, comments}) => {
+                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
+                    console.log('amazon updated');
+                })
+                .catch((err) => {
+                    // error ready here
+                });
+        }
+        // SCRAPE TRENDYOL COMMENTS & SAVE TO THE DATABASE
         for(const {code, category} of trendyolProductsList) {
             await trendyolScraper(code)
                 .then(({productName, comments}) => {
@@ -57,7 +68,7 @@ const run = async () => {
                     console.log(err);
                 });
         }
-        // SCRAPE HEPSIBURADA COMMENTS
+        // SCRAPE HEPSIBURADA COMMENTS & SAVE TO THE DATABASE
         for(const {code, category} of hepsiburadaProductsList){
             await hepsiburadaScraper(code)
                 .then(({productName, comments}) => {
@@ -68,17 +79,6 @@ const run = async () => {
                     // error ready here
                 })
         }
-        // SCRAPE AMAZON COMMENTS
-        for(const {asin, category} of amazonProductsList) {
-            await amazonScraper(asin)
-                .then(({productName, comments}) => {
-                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
-                    console.log('amazon updated');
-                })
-                .catch((err) => {
-                    // error ready here
-                });
-        }
     }
     catch(err)
     {
@@ -86,4 +86,9 @@ const run = async () => {
     }
 }
 
-run().then();
+// RUN PROGRAMME EVERY MIDNIGHT
+schedule.scheduleJob('55 * * * *', () => {
+    run().then(() => {
+        console.log('Scraping Done!')
+    });
+});

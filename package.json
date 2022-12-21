@@ -13,6 +13,7 @@
   "dependencies": {
     "moment": "^2.29.4",
     "mongodb": "^4.13.0",
+    "node-schedule": "^2.1.0",
     "puppeteer": "^19.3.0"
   }
 }

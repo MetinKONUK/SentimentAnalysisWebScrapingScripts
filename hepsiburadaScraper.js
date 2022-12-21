@@ -2,7 +2,10 @@ import puppeteer from 'puppeteer';
 import moment from 'moment';
 
 const Scrape = async (code) => {
-    const browser = await puppeteer.launch({headless: true});
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox']
+    });
     const page = (await browser.pages())[0];
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
     await page.goto(`https://hepsiburada.com/${code}-yorumlari?sayfa=1`);
