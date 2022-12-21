@@ -1,16 +1,7 @@
 import puppeteer from 'puppeteer';
-import moment from 'moment';
-import * as fs from 'fs';
 
-// list of all products' product code
-const products = [
-    { code: 'animal-health-200-ml-p-317233333'},
-    { code: '200-ml-antiseptik-dezenfektan-sprey-p-22714059' },
-];
-
-// scraper function
 const Scrape = async (code) => {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = (await browser.pages())[0];
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
     await page.goto(`https://www.trendyol.com/crystalin/${code}/yorumlar`);
@@ -24,15 +15,11 @@ const Scrape = async (code) => {
         return {productName, commentCount};
     });
 
-    moment.locale();
-    let scrapeDate = moment().format('L');
-
     await page.waitForSelector('[class=pr-rnr-com]', {visible: true});
-    const comments = await page.evaluate(async (commentCount, scrapeDate) => {
+    const comments = await page.evaluate(async (commentCount) => {
         let reviews = document.querySelectorAll('[class=rnr-com-w]');
         let scrollAmount = 1000;
         while(reviews.length < commentCount){
-            console.log('Scrolled', scrollAmount);
             window.scrollBy(0, scrollAmount);
             await new Promise(resolve => {
                 setTimeout(resolve, 500);
@@ -51,34 +38,13 @@ const Scrape = async (code) => {
             let authorName = details[0];
             let date = details[1];
             let vendorName = details[2].split(' ').slice(0, -2).join(' ');
-            comments.push({authorName, date, content, rate, vendorName, scrapeDate});
+            comments.push({authorName, date, content, rate, vendorName});
         })
         return comments;
-    }, commentCount, scrapeDate);
+    }, commentCount);
 
     await browser.close();
     return {productName, comments};
-}
+};
 
-products.forEach(product => {
-    let {code} = product;
-    Scrape(code).then(({productName, comments}) => {
-        const jsonContent = JSON.stringify(comments, null, '\t');
-        fs.writeFile(`./${productName}.json`, jsonContent, 'utf8', function (err) {
-            if (err) {
-                return console.log(err);
-            }
-
-            console.log("The file was saved!");
-        });
-
-        // console.log('Product Name: ', productName);
-        // console.log('Total Comments Count: ', comments.length);
-        // comments.forEach(comment => {
-        //     let {authorName, date, content, rate, vendorName} = comment;
-        //     console.log(`Author Name: ${authorName}\nDate: ${date}\nContent: ${content}\nRate: ${rate}\nVendor Name: ${vendorName}\n`);
-        // });
-    }).catch(err => {
-        console.log(err)
-    });
-});
+export { Scrape };

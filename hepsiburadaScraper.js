@@ -1,12 +1,6 @@
-import puppeteer from "puppeteer";
+import puppeteer from 'puppeteer';
+import moment from 'moment';
 
-// list of all products' product code
-const products = [
-    // {code: 'crystalin-animal-health-1-lt-yara-bakim-solusyonu-ve-dezenfektan-pm-HB00000EN9C4'},
-    {code: 'crystalin-kedi-kopek-icin-deri-ve-meme-bakim-solusyonu-200-ml-p-HBV00000CF6KA'},
-];
-
-// scraper function
 const Scrape = async (code) => {
     const browser = await puppeteer.launch({headless: true});
     const page = (await browser.pages())[0];
@@ -30,7 +24,6 @@ const Scrape = async (code) => {
     let i = 1;
     try {
         for(i; i < pageCount; ++i){
-            console.log('Scraping page: ', i);
             await page.waitForSelector('[itemprop=review]', {visible: true});
             const partialComments = await page.evaluate(() => {
                 let comments = [];
@@ -51,25 +44,27 @@ const Scrape = async (code) => {
             await page.goto(`https://hepsiburada.com/${code}-yorumlari?sayfa=${i+1}`);
         }
     } catch (e){
-        console.log('Terminated at page: ', i);
+        // console.log('Terminated at page: ', i);
     }
     await browser.close();
     return {productName, comments};
-}
+};
+
+export { Scrape };
 
 // scrape all products' comments
-products.forEach((product) => {
-    Scrape(product.code)
-        .then(data => {
-            const {productName, comments} = data;
-            console.log('Product Name:', productName);
-            console.log('Review Count', comments.length);
-            comments.forEach((comment) => {
-                let {content, date, authorName, authorAge, authorCity, rate} = comment;
-                console.log(`Author Name: ${authorName}\nAuthor Age: ${authorAge}\nAuthor City: ${authorCity}\nDate: ${date}\nContent: ${content}\nRate: ${rate}\n`);
-            });
-        })
-        .catch((err) => {
-            console.log(err)
-        });
-})
+// products.forEach((product) => {
+//     Scrape(product.code)
+//         .then(data => {
+//             const {productName, comments} = data;
+//             console.log('Product Name:', productName);
+//             console.log('Review Count', comments.length);
+//             comments.forEach((comment) => {
+//                 let {content, date, authorName, authorAge, authorCity, rate} = comment;
+//                 console.log(`Author Name: ${authorName}\nAuthor Age: ${authorAge}\nAuthor City: ${authorCity}\nDate: ${date}\nContent: ${content}\nRate: ${rate}\n`);
+//             });
+//         })
+//         .catch((err) => {
+//             console.log(err)
+//         });
+// })

@@ -1,11 +1,9 @@
-import puppeteer from "puppeteer";
-
-// list of all products' asin codes
-const products = [{asin: 'B07DGPHVSH'}, {asin: 'B00IHJTG56'}, {asin: 'B09XKLR3ML'}, {asin: 'B09BZFZCF7'}];
+import puppeteer from 'puppeteer';
+import moment from 'moment';
 
 // scraper function
 const Scrape = async (asin) => {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({headless: true});
     const page = await browser.newPage();
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
     await page.goto(`https://www.amazon.com.tr/product-reviews/${asin}`);
@@ -26,21 +24,6 @@ const Scrape = async (asin) => {
     });
     await browser.close();
     return data;
-}
+};
 
-// scrape all products' comments
-products.forEach((product) => {
-    Scrape(product.asin)
-        .then(data => {
-            const { productName, comments } = data;
-            console.log('Product Name: ', productName)
-            console.log('Review Count: ', comments.length);
-            comments.forEach((comment) => {
-                let {date, rate, content, authorName, reviewTitle} = comment;
-                console.log(`Author Name: ${authorName}\nDate: ${date}\nReview Title: ${reviewTitle}\nContent: ${content}\nRate: ${rate}\n`)
-            });
-        })
-        .catch(err => {
-            console.log(err)
-        });
-});
+export { Scrape };
