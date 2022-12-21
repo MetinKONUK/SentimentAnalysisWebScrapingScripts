@@ -11,69 +11,79 @@ import { products as hepsiburadaProductsList } from "./hepsiburadaProductsList.j
 import { Scrape as amazonScraper } from './amazonScraper.js';
 import { products as amazonProductsList } from "./amazonProductsList.js";
 
-trendyolProductsList.forEach(({ code }) => {
-    trendyolScraper(code)
-        .then(({productName, comments}) => {
-            console.log('Trendyol Scraped!')
-            // data ready here
-        })
-        .catch((err) => {
-            // error ready here
-        });
-});
+// CONFIGURE MOMENT TO CALCULATE DATE BASED ON LOCAL TIME
+moment.locale();
 
-// amazonProductsList.forEach(({asin} ) => {
-//     amazonScraper(asin)
-//         .then(({productName, comments}) => {
-//             console.log('Amazon Scraped!')
-//             // data ready here
-//         })
-//         .catch((err) => {
-//             // error ready here
-//         });
-// });
+// LIST OF ALL PRODUCT CATEGORIES
+let categories = ['animal-health-200-ml', 'animal-health-50-ml', 'antiseptic-sanitizer-100-ml', 'animal-health-1000-ml']
 
-// hepsiburadaProductsList.forEach(({ code }) => {
-//     hepsiburadaScraper(code)
-//         .then(({productName, comments}) => {
-//             console.log('HepsiBurada Scraped!')
-//             // data ready here
-//         })
-//         .catch((err) => {
-//             // error ready here
-//         })
-// })
+// CREDENTIALS
+const USERNAME = 'crystalin';
+const PASSWORD = 'crystalin';
+// CONNECTION URI
+const URI = `mongodb+srv://${USERNAME}:${PASSWORD}@crystalin.w93y0ww.mongodb.net/?retryWrites=true&w=majority`;
 
-//
-// const USERNAME = 'crystalin';
-// const PASSWORD = 'crystalin';
-// // CONNECTION URI
-// const URI = `mongodb+srv://${USERNAME}:${PASSWORD}@crystalin.w93y0ww.mongodb.net/?retryWrites=true&w=majority`;
-//
-// // CREATE A NEW MongoClient
-// const client = new MongoClient(URI);
-//
-// const run = async () => {
-//     try
-//     {
-//         // CONNECT THE CLIENT TO THE MONGODB SERVER
-//         await client.connect();
-//         // ESTABLISH & VERIFY CONNECTION
-//         await client.db('admin').command({ ping: 1});
-//         console.log('CONNECTED TO THE DATABASE');
-//
-//         const employees = await client.db('crystalin').collection('employee-collection').find({}).toArray();
-//         console.log(employees);
-//     }
-//     catch(err)
-//     {
-//         console.log(err);
-//     }
-//     finally
-//     {
-//         // ENSURE THAT CLIENT IS CLOSED WHEN PROGRAM ENDS
-//         await client.close();
-//     }
-// }
-//
-// run().then();
+// CREATE A NEW MongoClient
+const client = new MongoClient(URI);
+const run = async () => {
+    try
+    {
+        // CONNECT THE CLIENT TO THE MONGODB SERVER
+        await client.connect();
+        // ESTABLISH & VERIFY CONNECTION
+        await client.db('admin').command({ ping: 1});
+        console.log('CONNECTED TO THE DATABASE');
+        const collection = await client.db('crystalin').collection('scraped-data-collection');
+        // INITIALIZE NEW OBJECTS FOR NEW SCRAPE DATES INSIDE ALL PRODUCT TYPES
+        const date =  moment().format('L');
+        for(const category of categories) {
+            if(await collection.findOne({productName: category}) === null){
+                await collection.insertOne({productName: category});
+            }
+
+            if( await collection.findOne({productName:category, 'comments.scrapeDate':date}) === null){
+                    await collection.updateOne({productName:category}, {$push: {comments: {isAnalyzed: false, scrapeDate: date, trendyol: [], hepsiburada: [], amazon: []}}});
+            }
+        }
+        // SCRAPE TRENDYOL COMMENTS
+        for(const {code, category} of trendyolProductsList) {
+            await trendyolScraper(code)
+                .then(({productName, comments}) => {
+                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.trendyol': {$each: comments}}});
+                    console.log('trendyol updated');
+                })
+                .catch((err) => {
+                    // error ready here
+                    console.log(err);
+                });
+        }
+        // SCRAPE HEPSIBURADA COMMENTS
+        for(const {code, category} of hepsiburadaProductsList){
+            await hepsiburadaScraper(code)
+                .then(({productName, comments}) => {
+                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.hepsiburada': {$each: comments}}});
+                    console.log('hepsiburada updated');
+                })
+                .catch((err) => {
+                    // error ready here
+                })
+        }
+        // SCRAPE AMAZON COMMENTS
+        for(const {asin, category} of amazonProductsList) {
+            await amazonScraper(asin)
+                .then(({productName, comments}) => {
+                    collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
+                    console.log('amazon updated');
+                })
+                .catch((err) => {
+                    // error ready here
+                });
+        }
+    }
+    catch(err)
+    {
+        console.log(err);
+    }
+}
+
+run().then();
