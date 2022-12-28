@@ -1,9 +1,8 @@
 import puppeteer from 'puppeteer';
-import moment from 'moment';
-
+// scraper function
 const Scrape = async (code) => {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox']
     });
     const page = (await browser.pages())[0];
@@ -54,20 +53,3 @@ const Scrape = async (code) => {
 };
 
 export { Scrape };
-
-// scrape all products' comments
-// products.forEach((product) => {
-//     Scrape(product.code)
-//         .then(data => {
-//             const {productName, comments} = data;
-//             console.log('Product Name:', productName);
-//             console.log('Review Count', comments.length);
-//             comments.forEach((comment) => {
-//                 let {content, date, authorName, authorAge, authorCity, rate} = comment;
-//                 console.log(`Author Name: ${authorName}\nAuthor Age: ${authorAge}\nAuthor City: ${authorCity}\nDate: ${date}\nContent: ${content}\nRate: ${rate}\n`);
-//             });
-//         })
-//         .catch((err) => {
-//             console.log(err)
-//         });
-// })

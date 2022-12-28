@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-
+// scraper function
 const Scrape = async (code) => {
     const browser = await puppeteer.launch({
         headless: false,
@@ -21,14 +21,15 @@ const Scrape = async (code) => {
     await page.waitForSelector('[class=pr-rnr-com]', {visible: true});
     const comments = await page.evaluate(async (commentCount) => {
         let reviews = document.querySelectorAll('[class=rnr-com-w]');
-        let scrollAmount = 1000;
-        while(reviews.length < commentCount){
+        let scrollAmount = 500;
+        while(reviews.length !== commentCount){
+            console.log(reviews.length);
             window.scrollBy(0, scrollAmount);
             await new Promise(resolve => {
                 setTimeout(resolve, 500);
             });
             if(reviews.length !== document.querySelectorAll('[class=rnr-com-w]').length){
-                scrollAmount += 100;
+                scrollAmount += 50;
             }
             reviews = document.querySelectorAll('[class=rnr-com-w]');
         }

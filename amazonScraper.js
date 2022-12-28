@@ -1,10 +1,8 @@
 import puppeteer from 'puppeteer';
-import moment from 'moment';
-
 // scraper function
 const Scrape = async (asin) => {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: ['--no-sandbox']
     });
     const page = await browser.newPage();

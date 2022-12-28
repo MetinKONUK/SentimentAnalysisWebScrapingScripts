@@ -46,19 +46,19 @@ const run = async () => {
             }
         }
         // SCRAPE AMAZON COMMENTS & SAVE TO THE DATABASE
-        for(const {asin, category} of amazonProductsList) {
-            await amazonScraper(asin)
-                .then(async ({productName, comments}) => {
-                    for await (let comment of comments){
-                        comment.id = uuid();
-                    }
-                    await collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
-                    console.log('amazon updated');
-                })
-                .catch((err) => {
-                    // error ready here
-                });
-        }
+        // for(const {asin, category} of amazonProductsList) {
+        //     await amazonScraper(asin)
+        //         .then(async ({productName, comments}) => {
+        //             for await (let comment of comments){
+        //                 comment.id = uuid();
+        //             }
+        //             await collection.updateOne({productName: category, 'comments.scrapeDate': date}, {$push: {'comments.$.amazon': {$each: comments}}});
+        //             console.log('amazon updated');
+        //         })
+        //         .catch((err) => {
+        //             // error ready here
+        //         });
+        // }
         // SCRAPE TRENDYOL COMMENTS & SAVE TO THE DATABASE
         for (const {code, category} of trendyolProductsList) {
             await trendyolScraper(code)
